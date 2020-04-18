@@ -10,6 +10,7 @@ const store = require('./common/store')
 const { IS_MAC, IS_WIN, VERSION, GO_IPFS_VERSION } = require('./common/consts')
 const moveRepositoryLocation = require('./move-repository-location')
 const runGarbageCollector = require('./run-gc')
+const { setCustomBinary, clearCustomBinary, hasCustomBinary } = require('./custom-ipfs-binary')
 
 // Notes on this: we are only supporting accelerators on macOS for now because
 // they natively work as soon as the menu opens. They don't work like that on Windows
@@ -96,15 +97,28 @@ function buildMenu (ctx) {
         },
         { type: 'separator' },
         {
+          id: 'runGarbageCollector',
+          label: i18n.t('runGarbageCollector'),
+          click: () => { runGarbageCollector(ctx) },
+          enabled: false
+        },
+        { type: 'separator' },
+        {
           id: 'moveRepositoryLocation',
           label: i18n.t('moveRepositoryLocation'),
           click: () => { moveRepositoryLocation(ctx) }
         },
         {
-          id: 'runGarbageCollector',
-          label: i18n.t('runGarbageCollector'),
-          click: () => { runGarbageCollector(ctx) },
-          enabled: false
+          id: 'setCustomBinary',
+          label: i18n.t('setCustomIpfsBinary'),
+          click: () => { setCustomBinary(ctx) },
+          visible: false
+        },
+        {
+          id: 'clearCustomBinary',
+          label: i18n.t('clearCustomIpfsBinary'),
+          click: () => { clearCustomBinary(ctx) },
+          visible: false
         }
       ]
     },
@@ -120,7 +134,9 @@ function buildMenu (ctx) {
           click: () => { shell.openExternal('https://github.com/ipfs-shipyard/ipfs-desktop/releases') }
         },
         {
-          label: `go-ipfs ${GO_IPFS_VERSION}`,
+          label: hasCustomBinary()
+            ? i18n.t('customIpfsBinary')
+            : `go-ipfs ${GO_IPFS_VERSION}`,
           click: () => { shell.openExternal('https://github.com/ipfs/go-ipfs/releases') }
         },
         { type: 'separator' },
@@ -216,6 +232,9 @@ module.exports = function (ctx) {
 
     menu.getMenuItemById('moveRepositoryLocation').enabled = !gcRunning && status !== STATUS.STOPPING_STARTED
     menu.getMenuItemById('runGarbageCollector').enabled = menu.getMenuItemById('ipfsIsRunning').visible && !gcRunning
+
+    menu.getMenuItemById('setCustomBinary').visible = !hasCustomBinary()
+    menu.getMenuItemById('clearCustomBinary').visible = hasCustomBinary()
 
     if (status === STATUS.STARTING_FINISHED) {
       tray.setImage(icon(on))

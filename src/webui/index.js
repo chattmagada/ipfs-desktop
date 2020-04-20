@@ -6,6 +6,7 @@ const os = require('os')
 const openExternal = require('./open-external')
 const logger = require('../common/logger')
 const store = require('../common/store')
+const { IS_MAC, IS_WIN } = require('../common/consts')
 const dock = require('../utils/dock')
 
 serve({ scheme: 'webui', directory: join(__dirname, '../../assets/webui') })
@@ -62,6 +63,12 @@ const createWindow = () => {
 }
 
 module.exports = async function (ctx) {
+  // First time running this. If it's not macOS, nor Windows,
+  // enable launching web ui at login.
+  if (store.get(CONFIG_KEY, null) === null) {
+    store.set(CONFIG_KEY, !IS_MAC && !IS_WIN)
+  }
+
   openExternal()
 
   const window = createWindow(ctx)
@@ -119,7 +126,7 @@ module.exports = async function (ctx) {
     window.once('ready-to-show', () => {
       logger.info('[web ui] window ready')
 
-      if (store.get(CONFIG_KEY, false)) {
+      if (store.get(CONFIG_KEY)) {
         ctx.launchWebUI('/')
       }
 

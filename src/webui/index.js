@@ -10,6 +10,8 @@ const dock = require('../utils/dock')
 
 serve({ scheme: 'webui', directory: join(__dirname, '../../assets/webui') })
 
+const CONFIG_KEY = 'webuiAtLogin'
+
 const createWindow = () => {
   const dimensions = screen.getPrimaryDisplay()
 
@@ -116,6 +118,11 @@ module.exports = async function (ctx) {
   return new Promise(resolve => {
     window.once('ready-to-show', () => {
       logger.info('[web ui] window ready')
+
+      if (store.get(CONFIG_KEY, false)) {
+        ctx.launchWebUI('/')
+      }
+
       resolve()
     })
 
